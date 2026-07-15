@@ -1,0 +1,144 @@
+---
+title: "PH 142 Group Project - Part I"
+author: "Your Name (ID), Teammate Name (ID)"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Part I
+
+### Questions:
+
+**1. [2 marks]** The first part of our PPDAC framework is to identify the problem your are addressing with these data. State the question you are trying to answer and let us know what type of question this is in terms of the PPDAC framework.
+
+**Research Question:**
+
+Among adults surveyed in the 2024 Behavioral Risk Factor Surveillance System (BRFSS), do those who engaged in physical activity or exercise in the past 30 days report fewer days of poor mental health in the past 30 days compared to those who did not exercise?
+
+**Type of question (PPDAC Problem):**
+
+This is a comparative question. I am looking at whether a numerical outcome variable differs between two groups that are defined by a categorical exposure variable. In terms of the PPDAC framework, the Problem is to figure out whether there is an association between a behavioral exposure (whether someone exercised, which is a yes or no variable) and a health outcome (the number of poor mental health days, which is a numeric variable), by comparing the two exposure groups.
+
+The outcome variable is MENTHLTH, which is the number of days in the past 30 days that a person's mental health was not good.
+
+The exposure variable is EXERANY2, which tells us whether the respondent exercised in the past 30 days or not.
+
+Since this is a comparison between two groups, it will work well later on with a two sample t test in Part III.
+
+---
+
+**2. [2 marks]** Why is this question interesting or important?
+
+Mental health and physical activity are both huge public health topics right now, and a lot of research has already shown that exercise can help with things like depression and anxiety. But most of that research comes from clinical trials or smaller studies with specific groups of people, like patients who already have a diagnosed mental health condition. This question is interesting because it uses a large, nationally representative survey to see if the same pattern shows up in the general adult population, not just in people who are already being treated for something.
+
+This question also matters because mental health struggles are extremely common and expensive for the health care system, and exercise is a cheap and accessible intervention compared to therapy or medication. If the data show a strong relationship between exercising and having fewer poor mental health days, this could support public health messaging that encourages physical activity as a way to protect mental health, especially for people who might not have easy access to mental health care.
+
+Finally, this fills a bit of a gap because BRFSS is collected every year, but a lot of research using it focuses on physical conditions like diabetes or heart disease rather than mental health outcomes. Looking specifically at the connection between exercise and mental health days adds to a growing area of public health research that treats mental and physical health as connected rather than separate issues.
+
+---
+
+**3. [2 marks]** What is the target population for your project?
+
+The target population is noninstitutionalized adults aged 18 and older living in the United States, which is the population that BRFSS is designed to represent. I chose this population because BRFSS is one of the largest ongoing health surveys of adults in the country, so it gives a much broader and more general picture of the relationship between exercise and mental health than a small clinical sample would. Since mental health and physical activity affect people across all walks of life and not just people already receiving medical care, it made sense to look at a general adult population rather than a clinical or convenience sample. This also makes the findings more useful for shaping public health recommendations, since the goal is to understand patterns in the everyday adult population, not just in people who already have a diagnosed condition.
+
+---
+
+**4. [2 marks]** What is the sampling frame used to collect the data you are using?
+
+BRFSS is run by the CDC in partnership with all 50 states, the District of Columbia, and several U.S. territories. Each state health department uses random digit dialing to call both landlines and cell phones, and one adult is randomly selected from each household that is reached to complete the survey. Because the sampling frame is essentially all telephone numbers (landline and cell phone) associated with households in each state, the survey is meant to represent the noninstitutionalized adult population of the United States rather than any single clinic, hospital, or specific subgroup.
+
+I think this sampling strategy is appropriate for my question because random digit dialing across an entire state reaches a wide mix of people in terms of age, income, health status, and lifestyle, which is exactly the kind of general population I want to study. I would feel comfortable generalizing my findings to noninstitutionalized adults in the United States who have phone access, since that is the group the sampling design is built to represent. I would be more cautious generalizing to people without phone access, people living in institutions like nursing homes or prisons, or populations outside the U.S., since those groups are not part of the sampling frame.
+
+It is also worth noting that the full 2024 BRFSS dataset contains several hundred thousand respondents, which is far more than what is needed or practical for this class assignment. Because of this, we first took a random sample of 5,000 rows from the full dataset (using `slice_sample()` with a fixed seed for reproducibility), while keeping every one of the original 301 variables. This random sampling step was done purely to reduce the file to a manageable size for coursework, and does not introduce any bias since every respondent had an equal chance of being included. Because all variables were retained at this stage, the choice of exercise and mental health as our exposure and outcome variables was made afterward, once we could see which variables existed in the dataset and had large enough group sizes to support the analysis in this project.
+
+---
+
+**5. [2 marks]** Write a brief description of the source and contents of your dataset.
+
+My dataset is a random sample of 5,000 respondents drawn from the 2024 Behavioral Risk Factor Surveillance System (BRFSS), a publicly available annual health survey run by the CDC. The full 2024 dataset (LLCP2024.XPT) was downloaded from the CDC BRFSS website at https://www.cdc.gov/brfss/annual_data/annual_2024.html, and a reproducible random sample of 5,000 rows was drawn from the full dataset while retaining all 301 original variables, before a specific research question was chosen. The dataset contains variables covering demographics, chronic conditions, health behaviors, and health care access. Since BRFSS is a publicly available, de-identified federal dataset, no additional ethical approval was needed to use it for this class project.
+
+---
+
+**6. [1 mark]** Write code below to import your data into R.
+
+```{r import-data}
+# Import the BRFSS 2024 sample dataset into R
+# This CSV was already reduced to 5,000 rows using read_xpt() + slice_sample() in create_dataset.R
+brfss <- read.csv("brfss2024_sample.csv", stringsAsFactors = FALSE)
+
+# Note: BRFSS variable names that start with an underscore in the official codebook
+# (e.g. "_STATE", "_AGEG5YR") are not valid R names, so read.csv() automatically
+# prepends an "X" to them (e.g. "X_STATE", "X_AGEG5YR"). We use the R versions
+# of these names (with the leading X) throughout the rest of this script.
+```
+
+---
+
+**7. [3 marks]** Write code in R to answer the following questions:
+
+i) What are the dimensions of the dataset?
+ii) What are the variable names of the variables in your dataset?
+iii) Print the first six rows of the dataset.
+
+```{r explore-data}
+# i) Dimensions of the dataset (rows, columns)
+dim(brfss)
+# Output: 5000  301
+
+# ii) Variable names in the dataset
+names(brfss)
+# Output (301 total): "X_STATE" "FMONTH" "IDATE" "IMONTH" "IDAY" "IYEAR"
+# ... "EXERANY2" ... "MENTHLTH" ... "X_AIDTST4"
+
+# iii) First six rows of the dataset
+head(brfss)
+
+# Show just the key variables for the first six rows (easier to read than all 301 columns)
+# Note: "_STATE" and "_AGEG5YR" become "X_STATE" and "X_AGEG5YR" once read into R
+head(brfss[, c("SEQNO", "X_STATE", "EXERANY2", "MENTHLTH", "GENHLTH", "SEXVAR", "X_AGEG5YR")])
+```
+
+The dataset has 5,000 rows and 301 columns. Below is a subset of the first six rows, showing the key variables for this project (the respondent ID, state FIPS code, exercise status, poor mental health days, general health, sex, and age group), since printing all 301 columns would not fit legibly on the page. Note that for MENTHLTH, a value of 88 is BRFSS's code for "0 days" (i.e., zero days of poor mental health), not a literal count of 88 days.
+
+---
+
+**8. [2 marks]** Use the data to demonstrate a data visualization skill.
+
+```{r visualization}
+library(dplyr)
+library(ggplot2)
+
+# Recode MENTHLTH: 88 = 0 days, and drop Don't know/Refused (77, 99)
+# Recode EXERANY2 into a readable factor and drop Don't know/Refused (7, 9)
+brfss_clean <- brfss %>%
+  filter(EXERANY2 %in% c(1, 2)) %>%
+  mutate(
+    MENTHLTH_clean = ifelse(MENTHLTH == 88, 0, MENTHLTH),
+    exercise_group = factor(EXERANY2, levels = c(1, 2),
+                            labels = c("Exercised", "No exercise"))
+  ) %>%
+  filter(!MENTHLTH_clean %in% c(77, 99))
+
+# Boxplot comparing poor mental health days across exercise groups
+ggplot(brfss_clean, aes(x = exercise_group, y = MENTHLTH_clean, fill = exercise_group)) +
+  geom_boxplot() +
+  labs(
+    title = "Poor Mental Health Days by Exercise Status (BRFSS 2024 Sample)",
+    x = "Exercise in past 30 days",
+    y = "Days mental health was not good (past 30 days)"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+---
+
+**9. [2 marks]** Describe the skill that you are demonstrating, why you chose this visualization and interpret your findings.
+
+I am demonstrating how to compare the distribution of a numeric outcome variable across two groups using a side by side boxplot in ggplot2. I chose a boxplot instead of a histogram because my goal is to compare two groups directly rather than just look at one overall distribution, and boxplots make it easy to see differences in the median, spread, and skew between groups at a glance.
+
+In the sample, people who exercised in the past 30 days (n = 3,801) had a median of 0 poor mental health days and a mean of about 3.96 days, while people who did not exercise (n = 1,123) also had a median of 0 days but a higher mean of about 5.90 days. Both groups are heavily right skewed, since most people report 0 days of poor mental health and a smaller number of people report many days, up to the maximum of 30. Even though the median is 0 in both groups because more than half of people in each group report no poor mental health days, the no exercise group has a noticeably higher mean and a wider spread (a bigger box and more extreme high values), which suggests that people who do not exercise are more likely to have at least some poor mental health days, and those who do report bad days tend to report more of them. This lines up with my research question and suggests there may be a real difference between the two groups, which I will test formally in Part III using a two sample t test.
